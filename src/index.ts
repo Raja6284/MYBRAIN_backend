@@ -95,12 +95,12 @@ app.get("/api/v1/content",userMiddleware,async(req,res)=>{
     })
 })
 
-app.delete("/api/v1/content",userMiddleware,(req,res)=>{
+app.delete("/api/v1/content",userMiddleware,async(req,res)=>{
 
     const contentId = req.body.contentId
 
-    contentModel.deleteOne({
-        contentId,
+    await contentModel.deleteOne({
+        _id:contentId,
         //@ts-ignore
         userId : req.userId
     })
