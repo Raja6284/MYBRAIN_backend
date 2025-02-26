@@ -22,9 +22,15 @@ const contentSchema = new Schema({
     type:{type:String,enum:contentTypes},
     title:{type:String,required:true},
     tags:[{type:Types.ObjectId,ref:'Tag'}],
-    userId:[{type:Types.ObjectId,ref:'User'}]
+    userId:[{type:Types.ObjectId,ref:'User',required:true}]
 })
 
 export const contentModel = model("Content",contentSchema)
 
 
+const linkSchema = new Schema({
+    hash:String,
+    userId:[{type:Types.ObjectId,ref:'User',required:true,unique:true}]
+})
+
+export const linkModel = model("Links", linkSchema)
