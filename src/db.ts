@@ -5,8 +5,6 @@ import { mongoURI } from "./config"
 
 mongoose.connect(mongoURI)
 
-
-
 const userSchema = new Schema({
     username:{type:String,unique:true,required:true},
     password:{type:String, required:true}
@@ -15,14 +13,15 @@ const userSchema = new Schema({
 export  const userModel = model("User",userSchema)
 
 
-const contentTypes = ["image","video","article","audio","youtube","twitter"]
+const contentTypes = ["image","video","article","audio","youtube","twitter","instagram","linkedin","text","code"]
 
 const contentSchema = new Schema({
-    link:{type:String,required:true},
+    link:{type:String},
     type:{type:String,enum:contentTypes},
     title:{type:String,required:true},
     tags:[{type:Types.ObjectId,ref:'Tag'}],
-    userId:[{type:Types.ObjectId,ref:'User',required:true}]
+    userId:[{type:Types.ObjectId,ref:'User',required:true}],
+    text:{type:String}
 })
 
 export const contentModel = model("Content",contentSchema)

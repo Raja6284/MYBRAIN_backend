@@ -9,12 +9,17 @@ import cors from "cors"
 
 const app = express();
 app.use(express.json())
-app.use(cors())
+
+app.use(cors({
+    origin: "*", // Allow all origins (for testing)
+    credentials: true
+  }));
 
 
 app.post("/api/v1/signup", async (req, res) => {
 
     //TODO: zod validation,hash the password , add all status code which is required
+
 
     const username = req.body.username
     const password = req.body.password
@@ -65,23 +70,30 @@ app.post("/api/v1/signin", async (req, res) => {
 })
 
 app.post("/api/v1/content", userMiddleware, async (req, res) => {
-    const link = req.body.link
-    const title = req.body.title
-    const type = req.body.type
+    try{
 
-    const content = await contentModel.create({
-        link,
-        type,
-        title,
-        tags: [],
-        //@ts-ignore
-        userId: req.userId
-
-    })
-
-    res.status(200).json({
-        message: "content added"
-    })
+        const link = req.body.link
+        const title = req.body.title
+        const type = req.body.type
+        const text = req.body.text
+    
+        const content = await contentModel.create({
+            link,
+            type,
+            title,
+            text,
+            tags: [],
+            //@ts-ignore
+            userId: req.userId
+    
+        })
+    
+        res.status(200).json({
+            message: "content added"
+        })
+    }catch(err){
+        console.log("An error occured while adding content " + err)
+    }
 })
 
 app.get("/api/v1/content", userMiddleware, async (req, res) => {
