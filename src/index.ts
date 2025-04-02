@@ -57,7 +57,7 @@ app.post("/api/v1/signup", async (req: Request, res: Response): Promise<any> => 
             username: username,
             password: hashedPassword
         })
-        console.log(hashedPassword)
+        
         res.json({
             message: "user Signed up"
 
@@ -144,6 +144,75 @@ app.post("/api/v1/content", userMiddleware, async (req, res) => {
         })
     }
 })
+
+
+// Add this to your existing API route file that handles content endpoints
+
+/**
+ * Update content endpoint
+ * PUT /api/v1/content/:id
+ */
+app.put('/api/v1/content/:id',userMiddleware, async (req, res):Promise<any> => {
+    try {
+
+    //@ts-ignore
+    const userId = req.userId
+      const user = await userModel.findById(userId);
+      if (!user) {
+        return res.status(401).json({ message: 'User not found' });
+      }
+  
+      const contentId = req.params.id;
+      
+      // Find content by ID and check if it belongs to the user
+      const existingContent = await contentModel.findOne({ 
+        _id: contentId,
+        userId: userId
+      });
+  
+      if (!existingContent) {
+        return res.status(404).json({ message: 'Content not found or not authorized' });
+      }
+  
+      // Update fields based on content type
+      const updateData = {};
+      
+      // Always update title if provided
+      if (req.body.title) {
+        //@ts-ignore
+        updateData.title = req.body.title;
+      }
+      
+      // Update type-specific fields
+      if (existingContent.type === 'text' || existingContent.type === 'code') {
+        if (req.body.text !== undefined) {
+            //@ts-ignore
+          updateData.text = req.body.text;
+        }
+      } else if (['youtube', 'twitter', 'linkedin', 'instagram', 'randomLink'].includes
+        //@ts-ignore
+        (existingContent.type)) {
+        if (req.body.link) {
+            //@ts-ignore
+          updateData.link = req.body.link;
+        }
+      }
+      
+      // Update the content
+      const updatedContent = await contentModel.findByIdAndUpdate(
+        contentId,
+        { $set: updateData },
+        { new: true } // Return the updated document
+      );
+  
+      return res.status(200).json(updatedContent);
+    } catch (error) {
+      console.error('Error updating content:', error);
+      return res.status(500).json({ message: 'Internal server error', error });
+    }
+  });
+
+
 
 app.get("/api/v1/content", userMiddleware, async (req, res) => {
 
