@@ -8,15 +8,25 @@ import { random } from "./utils";
 import cors from "cors"
 import bcrypt from 'bcrypt'
 import { Request, Response } from "express";
+import { OAuth2Client } from "google-auth-library";
+import { GOOGLE_CLIENT_ID } from "./config";
+import { GOOGLE_CLIENT_SECRET } from "./config";
 
 const app = express();
 app.use(express.json())
 
-app.use(cors({
-    origin: "*", // Allow all origins (for testing)
-    credentials: true
-}));
+// app.use(cors({
+//     origin: "*", // Allow all origins (for testing)
+//     credentials: true
+// }));
 
+
+app.use(cors({
+    origin: ["http://localhost:5173", "http://192.168.29.207:5173"], // Add all your frontend URLs
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 async function hashPassword(password: string) {
     try {
@@ -29,6 +39,77 @@ async function hashPassword(password: string) {
         throw new Error("Hashing failed");
     }
 }
+
+
+const client = new OAuth2Client({
+    clientId: GOOGLE_CLIENT_ID,
+    clientSecret: GOOGLE_CLIENT_SECRET,
+    redirectUri: "http://localhost:5173" // Match your frontend exactly
+  });
+
+// Backend fix for google-signin endpoint
+app.post("/api/v1/google-signin", async (req, res):Promise<any> => {
+    try {
+      const { code } = req.body;
+      
+      if (!code) {
+        return res.status(400).json({ message: "Authorization code is required" });
+      }
+      
+      console.log("Received code:", code);
+      
+      // Exchange code for tokens
+      try {
+        const { tokens } = await client.getToken(code);
+        console.log("Got tokens:", Object.keys(tokens));
+        
+        if (!tokens.id_token) {
+          return res.status(400).json({ message: "No ID token received" });
+        }
+        
+        // Verify ID token
+        const ticket = await client.verifyIdToken({
+          idToken: tokens.id_token,
+          audience: GOOGLE_CLIENT_ID
+        });
+        
+        const payload = ticket.getPayload();
+        console.log("Payload received:", payload);
+        
+        if (!payload || !payload.email) {
+          return res.status(400).json({ message: "Invalid user data" });
+        }
+        
+        // Find or create user
+        let user = await userModel.findOne({ username: payload.email });
+        
+        if (!user) {
+          console.log("Creating new user:", payload.email);
+          user = await userModel.create({
+            username: payload.email,
+            password: "123456789" // For Google auth users
+          });
+        } else {
+          console.log("Found existing user:", payload.email);
+        }
+        
+        // Generate JWT
+        const token = jwt.sign({ id: user._id }, JWT_PASSWORD);
+        return res.json({ token });
+        
+      } catch (tokenError) {
+        console.error("Token exchange error:", tokenError);
+        return res.status(400).json({ 
+          message: "Failed to exchange code for token", 
+          tokenError
+        });
+      }
+      
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      return res.status(500).json({ message: "Internal server error", error });
+    }
+  });
 
 
 app.post("/api/v1/signup", async (req: Request, res: Response): Promise<any> => {
@@ -146,12 +227,6 @@ app.post("/api/v1/content", userMiddleware, async (req, res) => {
 })
 
 
-// Add this to your existing API route file that handles content endpoints
-
-/**
- * Update content endpoint
- * PUT /api/v1/content/:id
- */
 app.put('/api/v1/content/:id',userMiddleware, async (req, res):Promise<any> => {
     try {
 
