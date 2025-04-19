@@ -76,21 +76,21 @@ app.post("/api/v1/google-signin", async (req, res):Promise<any> => {
         const payload = ticket.getPayload();
         console.log("Payload received:", payload);
         
-        if (!payload || !payload.email) {
+        if (!payload || !payload.name) {
           return res.status(400).json({ message: "Invalid user data" });
         }
         
         // Find or create user
-        let user = await userModel.findOne({ username: payload.email });
+        let user = await userModel.findOne({ username: payload.name });
         
         if (!user) {
-          console.log("Creating new user:", payload.email);
+          console.log("Creating new user:", payload.name);
           user = await userModel.create({
-            username: payload.email,
+            username: payload.name,
             password: "123456789" // For Google auth users
           });
         } else {
-          console.log("Found existing user:", payload.email);
+          console.log("Found existing user:", payload.name);
         }
         
         // Generate JWT
@@ -194,6 +194,26 @@ app.post("/api/v1/signin", async (req, res): Promise<any> => {
 })
 
 
+app.get("/api/v1/user",userMiddleware,async(req,res):Promise<any> =>{
+    try{
+
+      //@ts-ignore
+    const userId = req.userId
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    const username = user.username
+    res.json({
+        username
+    })
+
+    }catch(error){
+        console.error('Error fetching user', error);
+      return res.status(500).json({ message: 'Internal server error', error });
+    }
+})
 
 
 app.post("/api/v1/content", userMiddleware, async (req, res) => {
