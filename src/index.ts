@@ -11,9 +11,11 @@ import { Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import { GOOGLE_CLIENT_ID } from "./config";
 import { GOOGLE_CLIENT_SECRET } from "./config";
+import rateLimit from "express-rate-limit";
+
 
 const app = express();
-app.use(express.json())
+app.use(express.json({ limit: '10kb' }));
 
 // app.use(cors({
 //     origin: "*", // Allow all origins (for testing)
@@ -27,6 +29,18 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // Limit each IP to 20 requests per window
+    message: "Too many requests from this IP, please try again after 15 minutes.",
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  });
+  
+app.use("/api/v1/signup", authLimiter);
+app.use("/api/v1/signin", authLimiter);
 
 async function hashPassword(password: string) {
     try {
@@ -87,7 +101,7 @@ app.post("/api/v1/google-signin", async (req, res):Promise<any> => {
           console.log("Creating new user:", payload.name);
           user = await userModel.create({
             username: payload.name,
-            password: "123456789" // For Google auth users
+            password: payload.sub// For Google auth users
           });
         } else {
           console.log("Found existing user:", payload.name);
@@ -123,6 +137,13 @@ app.post("/api/v1/signup", async (req: Request, res: Response): Promise<any> => 
             return res.status(400).json({
                 message: "Username and password are required"
             });
+        }
+
+        if (username.length < 3 || username.length > 20) {
+            return res.status(400).json({ message: "Username must be 3-20 characters" });
+          }
+        if (password.length < 8) {
+        return res.status(400).json({ message: "Password must be ≥8 characters" });
         }
 
         const existingUser = await userModel.findOne({ username })
@@ -216,13 +237,17 @@ app.get("/api/v1/user",userMiddleware,async(req,res):Promise<any> =>{
 })
 
 
-app.post("/api/v1/content", userMiddleware, async (req, res) => {
+app.post("/api/v1/content", userMiddleware, async (req, res):Promise<any> => {
     try {
 
         const link = req.body.link
         const title = req.body.title
         const type = req.body.type
         const text = req.body.text
+
+        if (text && text.length > 10_000) {
+            return res.status(413).json({ message: "Text exceeds 10,000 characters" });
+          }
 
         const content = await contentModel.create({
             link,
