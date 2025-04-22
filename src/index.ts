@@ -28,7 +28,7 @@ app.use(express.json({ limit: '10kb' }));
 
 
 app.use(cors({
-    origin: ["http://localhost:5173", "http://192.168.29.207:5173","https://onebrain.vercel.app/"], // Add all your frontend URLs
+    origin: ["http://localhost:5173", "http://192.168.29.207:5173","https://onebrain.vercel.app"], // Add all your frontend URLs
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
