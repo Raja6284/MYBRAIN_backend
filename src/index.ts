@@ -62,7 +62,7 @@ async function hashPassword(password: string) {
 const client = new OAuth2Client({
     clientId: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
-    redirectUri: "https://onebrain.vercel.app/" // Match your frontend exactly
+    redirectUri: "https://onebrain.vercel.app" // Match your frontend exactly
   });
 
 // Backend fix for google-signin endpoint
