@@ -28,7 +28,7 @@ app.use(express.json({ limit: '10kb' }));
 
 
 app.use(cors({
-    origin: ["http://localhost:5173", "http://192.168.29.207:5173"], // Add all your frontend URLs
+    origin: ["http://localhost:5173", "http://192.168.29.207:5173","https://onebrain.vercel.app/"], // Add all your frontend URLs
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
@@ -62,7 +62,7 @@ async function hashPassword(password: string) {
 const client = new OAuth2Client({
     clientId: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
-    redirectUri: "http://localhost:5173" // Match your frontend exactly
+    redirectUri: "https://onebrain.vercel.app/" // Match your frontend exactly
   });
 
 // Backend fix for google-signin endpoint
