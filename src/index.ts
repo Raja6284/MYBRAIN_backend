@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from "express"
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
@@ -12,6 +15,7 @@ import { OAuth2Client } from "google-auth-library";
 import { GOOGLE_CLIENT_ID } from "./config";
 import { GOOGLE_CLIENT_SECRET } from "./config";
 import rateLimit from "express-rate-limit";
+
 
 
 const app = express();

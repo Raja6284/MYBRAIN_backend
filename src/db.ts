@@ -1,9 +1,9 @@
 import mongoose, { Types } from "mongoose"
 import {model,Schema} from "mongoose"
-import { mongoURI } from "./config"
+import { MONGODB_URI } from "./config"
 
 
-mongoose.connect(mongoURI)
+mongoose.connect(MONGODB_URI)
 
 const userSchema = new Schema({
     username:{type:String,unique:true,required:true},
